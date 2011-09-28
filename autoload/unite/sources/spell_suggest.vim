@@ -16,4 +16,6 @@ function! s:unite_source.gather_candidates(args, context)
                 \ }')
 endfunction
 
-call unite#define_source(s:unite_source)
+function! unite#sources#spell_suggest#define() "{{{
+    return s:unite_source
+endfunction "}}}
