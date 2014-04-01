@@ -29,9 +29,9 @@ if ! has('spell')
 endif
 
 let s:unite_source = {
-  \ 'name': 'spell_suggest',
-  \ 'description': 'candidates from spellsuggest()',
-  \ 'default_kind': 'word',
+  \ 'name'          : 'spell_suggest',
+  \ 'description'   : 'candidates from spellsuggest()',
+  \ 'default_kind'  : 'word',
   \ 'default_action': 'yank',
   \ }
 
@@ -48,3 +48,5 @@ endfunction
 function! unite#sources#spell_suggest#define()
   return s:unite_source
 endfunction
+
+" vim:set sw=2 sts=2 ts=8 et fdm=marker fdo+=jump fdl=1:
