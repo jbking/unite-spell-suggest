@@ -32,7 +32,6 @@ let s:unite_source = {
   \ 'name': 'spell_suggest',
   \ 'default_kind': 'word',
   \ }
-let g:unite_spell_suggest_limit = 5
 
 function! s:unite_source.gather_candidates(args, context)
   let l:word = get(a:, 'args[0]', expand('<cword>'))
@@ -40,7 +39,8 @@ function! s:unite_source.gather_candidates(args, context)
     echohl WarningMsg | echomsg 'spell_suggest: no word to base spelling suggestions on.' | echohl None
     return []
   endif
-  return map(spellsuggest(l:word, g:unite_spell_suggest_limit), '{ "word": v:val }')
+  let l:limit = get(g:, 'unite_spell_suggest_limit', 25)
+  return map(spellsuggest(l:word, l:limit), '{ "word": v:val }')
 endfunction
 
 function! unite#sources#spell_suggest#define()
