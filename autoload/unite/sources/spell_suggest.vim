@@ -38,8 +38,13 @@ let s:unite_source = {
 function! s:unite_source.gather_candidates(args, context)
   let l:word = get(a:, 'args[0]', expand('<cword>'))
   if l:word == ''
-    echohl WarningMsg | echomsg 'spell_suggest: no word to base spelling suggestions on.' | echohl None
-    return []
+    try
+      echohl WarningMsg 
+      echomsg 'spell_suggest: no word to base spelling suggestions on.'
+    finally
+      echohl None
+      return []
+    endtry
   endif
   let l:limit = get(g:, 'unite_spell_suggest_limit', 25)
   return map(spellsuggest(l:word, l:limit),
@@ -47,7 +52,7 @@ function! s:unite_source.gather_candidates(args, context)
 endfunction
 
 function! unite#sources#spell_suggest#define()
-  return s:unite_source
+  return get(s:, 'unite_source', [])
 endfunction
 
 " vim:set sw=2 sts=2 ts=8 et fdm=marker fdo+=jump fdl=1:
