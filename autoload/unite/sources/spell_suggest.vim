@@ -30,16 +30,17 @@ endif
 
 let s:unite_source = {
             \ 'name': 'spell_suggest',
-            \ 'is_volatile': 1,
+            \ 'default_kind': 'word',
             \ }
 let g:unite_spell_suggest_limit = 5
 
 function! s:unite_source.gather_candidates(args, context)
-    return map(spellsuggest(a:context.input, g:unite_spell_suggest_limit), '{
-                \ "word": v:val,
-                \ "source": "spell_suggest",
-                \ "kind": "word",
-                \ }')
+    let l:word = get(a:, 'args[0]', expand('<cword>'))
+    if l:word == ''
+        echohl WarningMsg | echomsg 'spell_suggest: no word to base spelling suggestions on.' | echohl None
+        return []
+    endif
+    return map(spellsuggest(l:word, g:unite_spell_suggest_limit), '{ "word": v:val }')
 endfunction
 
 function! unite#sources#spell_suggest#define() "{{{
