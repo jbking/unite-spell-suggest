@@ -42,7 +42,8 @@ function! s:unite_source.gather_candidates(args, context)
     return []
   endif
   let l:limit = get(g:, 'unite_spell_suggest_limit', 25)
-  return map(spellsuggest(l:word, l:limit), '{ "word": v:val }')
+  return map(spellsuggest(l:word, l:limit),
+    \ '{ "word": v:val, "abbr": printf("%2d: %s", v:key+1, v:val) }')
 endfunction
 
 function! unite#sources#spell_suggest#define()
