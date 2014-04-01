@@ -30,6 +30,7 @@ endif
 
 let s:unite_source = {
   \ 'name': 'spell_suggest',
+  \ 'description': 'candidates from spellsuggest()',
   \ 'default_kind': 'word',
   \ }
 
