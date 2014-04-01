@@ -32,6 +32,7 @@ let s:unite_source = {
   \ 'name': 'spell_suggest',
   \ 'description': 'candidates from spellsuggest()',
   \ 'default_kind': 'word',
+  \ 'default_action': 'yank',
   \ }
 
 function! s:unite_source.gather_candidates(args, context)
