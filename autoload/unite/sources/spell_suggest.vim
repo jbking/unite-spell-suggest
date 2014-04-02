@@ -50,6 +50,7 @@ call unite#define_kind(s:unite_kind_substitution)
 let s:unite_source = {
   \ 'name'        : 'spell_suggest',
   \ 'description' : 'candidates from spellsuggest()',
+  \ 'hooks'       : {},
   \ }
 
 " * candidate listing
@@ -81,6 +82,12 @@ function! s:unite_source.gather_candidates(args, context)
       \  "abbr": printf("%2d: %s", v:key+1, v:val),
       \  "kind": l:kind}')
   endif
+endfunction
+
+" * syntax highlighting
+function! s:unite_source.hooks.on_syntax(args, context)
+  syntax match uniteSource_spell_suggest_LineNr /^\s\+\d\+:/
+  highlight default link uniteSource_spell_suggest_LineNr LineNr
 endfunction
 
 " Helper functions: {{{1
