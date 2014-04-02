@@ -1,8 +1,9 @@
 "=============================================================================
 " FILE: spell_suggest.vim
 " AUTHOR:  MURAOKA Yusuke <yusuke@jbking.org>
-" Last Change: 29-Sep-2011.
-" License: MIT license  {{{
+"          Martin Kopischke <martin@kopischke.net>
+" Last Change: 2014-04-03.
+" License: MIT license  {{{1
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
 "     "Software"), to deal in the Software without restriction, including
@@ -28,31 +29,73 @@ if ! has('spell')
   finish
 endif
 
-let s:unite_source = {
-  \ 'name'          : 'spell_suggest',
-  \ 'description'   : 'candidates from spellsuggest()',
-  \ 'default_kind'  : 'word',
-  \ 'default_action': 'yank',
-  \ }
-
-function! s:unite_source.gather_candidates(args, context)
-  let l:word = get(a:, 'args[0]', expand('<cword>'))
-  if l:word == ''
-    try
-      echohl WarningMsg 
-      echomsg 'spell_suggest: no word to base spelling suggestions on.'
-    finally
-      echohl None
-      return []
-    endtry
-  endif
-  let l:limit = get(g:, 'unite_spell_suggest_limit', 25)
-  return map(spellsuggest(l:word, l:limit),
-    \ '{ "word": v:val, "abbr": printf("%2d: %s", v:key+1, v:val) }')
-endfunction
-
 function! unite#sources#spell_suggest#define()
   return get(s:, 'unite_source', [])
 endfunction
 
+" Define 'substitution' kind: {{{1
+" defined here because of its tight coupling to s:cword
+let s:unite_kind_substitution                = {'name': 'substitution'}
+let s:unite_kind_substitution.default_action = 'replace'
+let s:unite_kind_substitution.action_table   = {'replace':
+  \ { 'description': 'replace the current word with the candidate' },}
+
+function! s:unite_kind_substitution.action_table.replace.func(candidate)
+  call s:replace_word(s:cword, a:candidate.word)
+endfunction
+
+call unite#define_kind(s:unite_kind_substitution)
+
+" Define source: {{{1
+let s:unite_source = {
+  \ 'name'        : 'spell_suggest',
+  \ 'description' : 'candidates from spellsuggest()',
+  \ }
+
+" * candidate listing
+function! s:unite_source.gather_candidates(args, context)
+  if &spell == 0
+    return []
+  endif
+
+  " get word under cursor
+  let s:cword = {}
+  let s:cword.word = s:trim(expand('<cword>'))
+  let s:cword.line = line('.')
+  let s:cword.col  = col('.')
+
+  " get word to base suggestions on
+  let l:word = len(a:args) > 0 ?
+    \ a:args[0] == '?' ? s:trim(input('Suggest spelling for: ', '', 'history')) : a:args[0] :
+    \ s:cword.word
+
+  " get suggestions
+  if l:word == ''
+    return []
+  else
+    let l:limit       = get(g:, 'unite_spell_suggest_limit', 0)
+    let l:suggestions = l:limit > 0 ? spellsuggest(l:word, l:limit) : spellsuggest(l:word)
+    let l:kind        = s:cword.word != '' ? 'substitution' : 'word'
+    return map(l:suggestions,
+      \'{"word": v:val,
+      \  "abbr": printf("%2d: %s", v:key+1, v:val),
+      \  "kind": l:kind}')
+  endif
+endfunction
+
+" Helper functions: {{{1
+" * replace word (defined by word, line, col)
+function! s:replace_word(word, replacement)
+  let l:line = getline(a:word.line)
+  let l:col  = match(l:line[:a:word.col], '\<\w\+$')
+  if l:col > -1
+    call setline(a:word.line, l:line[:l:col-1] . a:replacement . l:line[l:col+len(a:word.word):])
+  endif
+endfunction
+
+" * trim leading and trailing whitespace
+function! s:trim(string)
+  return matchstr(a:string, '\S.\+\S')
+endfunction
+" }}}
 " vim:set sw=2 sts=2 ts=8 et fdm=marker fdo+=jump fdl=1:
