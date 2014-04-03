@@ -104,7 +104,9 @@ function! s:replace_word(word, replacement)
   let l:line = getline(a:word.line)
   let l:col  = match(l:line[:a:word.col], '\<\w\+$')
   if l:col > -1
-    call setline(a:word.line, l:line[:l:col-1] . a:replacement . l:line[l:col+len(a:word.word):])
+    let l:head = l:col > 1 ? l:line[l:col-1] : ''
+    let l:tail = l:line[l:col+len(a:word.word):]
+    call setline(a:word.line, l:head . a:replacement . l:tail)
   endif
 endfunction
 
