@@ -37,11 +37,19 @@ endfunction
 " defined here because of its tight coupling to s:cword
 let s:unite_kind_substitution                = {'name': 'substitution'}
 let s:unite_kind_substitution.default_action = 'replace'
-let s:unite_kind_substitution.action_table   = {'replace':
-  \ { 'description': 'replace the current word with the candidate' },}
+let s:unite_kind_substitution.action_table   = {
+  \ 'replace':
+  \   {'description': 'replace the current word with the candidate'},
+  \ 'replace_all':
+  \   {'description': 'replace all occurences of the current word with the candidate'}
+  \ }
 
 function! s:unite_kind_substitution.action_table.replace.func(candidate)
   call s:replace_word(s:cword, a:candidate.word)
+endfunction
+
+function! s:unite_kind_substitution.action_table.replace_all.func(candidate)
+  execute '% substitute/\<'.s:cword.word.'\>/'.a:candidate.word.'/Ig'
 endfunction
 
 call unite#define_kind(s:unite_kind_substitution)
