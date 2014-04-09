@@ -102,7 +102,12 @@ endfunction
 " * replace word (defined by word, line, col)
 function! s:replace_word(word, replacement)
   let l:line = getline(a:word.line)
-  let l:col  = match(l:line[:a:word.col], '\<\w\+$')
+  if a:word.col == 1
+    let l:col = a:word.col
+  else
+    let l:col = match(l:line[a:word.col-1 :], '^\W\+\zs\<')
+    let l:col = l:col == -1 ? match(l:line[: a:word.col-1], '\<\w\+$') : l:col + a:word.col-1
+  endif
   if l:col > -1
     let l:head = l:col > 1 ? l:line[:l:col-1] : ''
     let l:tail = l:line[l:col+len(a:word.word):]
