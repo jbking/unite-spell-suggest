@@ -2,7 +2,7 @@
 " FILE: spell_suggest.vim
 " AUTHOR:  MURAOKA Yusuke <yusuke@jbking.org>
 "          Martin Kopischke <martin@kopischke.net>
-" Last Change: 2014-04-03.
+" Last Change: 2014-04-10.
 " License: MIT license  {{{1
 "     Permission is hereby granted, free of charge, to any person obtaining
 "     a copy of this software and associated documentation files (the
@@ -102,17 +102,23 @@ endfunction
 " * replace word (defined by word, line, col)
 function! s:replace_word(word, replacement)
   let l:line = getline(a:word.line)
-  if a:word.col == 1
-    let l:col = a:word.col
+
+  " extract leading and trailing line parts using regexes only, as string
+  " indexes are byte-based and thus not multi-byte safe to iterate
+  if l:line[: a:word.col] =~ a:word.word.'\W$'
+    " we are on the last character: using matchend() to the end of a word
+    " would get us the next word instead of the current one
+    let l:heading  = substitute(l:line[: a:word.col - len(a:word.word)], '.$', '', '')
+    let l:trailing = l:line[a:word.col :]
   else
-    let l:col = match(l:line[a:word.col-1 :], '^\W\+\zs\<')
-    let l:col = l:col == -1 ? match(l:line[: a:word.col-1], '\<\w\+$') : l:col + a:word.col-1
+    " get line to end of current word, then strip it from the line
+    let l:including = substitute(l:line[: matchend(l:line[a:word.col :], '\W*\zs\w\+\>') + a:word.col], '\W\?$', '', '')
+    let l:heading   = substitute(l:including, a:word.word.'$', '', '')
+    let l:trailing  = substitute(l:line, '^'.l:including, '', '')
   endif
-  if l:col > -1
-    let l:head = l:col > 1 ? l:line[:l:col-1] : ''
-    let l:tail = l:line[l:col+len(a:word.word):]
-    call setline(a:word.line, l:head . a:replacement . l:tail)
-  endif
+
+  " write amended line and place cursor at end of inserted word
+  call setline(a:word.line, l:heading . a:replacement . l:trailing)
 endfunction
 
 " * trim leading and trailing whitespace
