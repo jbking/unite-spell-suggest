@@ -24,8 +24,7 @@
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
-
-if ! has('spell')
+if !has('spell') || &compatible || !exists('*unite#define_kind')
   finish
 endif
 
