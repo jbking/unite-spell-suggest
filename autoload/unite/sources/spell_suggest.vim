@@ -99,7 +99,7 @@ endfunction
 
 " Helper functions: {{{1
 " * replace word (defined by word, line, col)
-function! s:replace_word(word, replacement)
+function! s:replace_word(word, replacement) abort
   let l:line = getline(a:word.line)
 
   " extract leading and trailing line parts using regexes only, as string
