@@ -119,6 +119,7 @@ function! s:replace_word(word, replacement)
 
   " write amended line and place cursor at end of inserted word
   call setline(a:word.line, l:heading . a:replacement . l:trailing)
+  call setpos('.', [0, a:word.line, len(l:heading) + len(a:replacement), 0])
 endfunction
 
 " * trim leading and trailing whitespace
