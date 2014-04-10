@@ -83,7 +83,7 @@ function! s:unite_source.gather_candidates(args, context)
   else
     let l:limit       = get(g:, 'unite_spell_suggest_limit', 0)
     let l:suggestions = l:limit > 0 ? spellsuggest(l:word, l:limit) : spellsuggest(l:word)
-    let l:kind        = s:cword.word != '' ? 'substitution' : 'word'
+    let l:kind        = s:cword.word != '' && &modifiable ? 'substitution' : 'word'
     return map(l:suggestions,
       \'{"word": v:val,
       \  "abbr": printf("%2d: %s", v:key+1, v:val),
