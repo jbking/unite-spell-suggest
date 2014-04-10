@@ -46,8 +46,8 @@ let s:unite_kind_substitution.action_table   = {
 " * 'replace' [word under cursor] action
 function! s:unite_kind_substitution.action_table.replace.func(candidate)
   if s:cword.focus()
-    call setline(s:cword.line, s:cword.before . a:candidate.word . s:cword.after)
-    call cursor(s:cword.line, len(s:cword.before) + len(a:candidate.word))
+    call setline(s:cword.lnum, s:cword.before . a:candidate.word . s:cword.after)
+    call cursor(s:cword.lnum, len(s:cword.before) + len(a:candidate.word))
   endif
 endfunction
 
@@ -77,7 +77,7 @@ function! s:unite_source.gather_candidates(args, context)
   let s:cword       = {}
   let s:cword.word  = s:trim(expand('<cword>'))
   let s:cword.bufnr = bufnr('%')
-  let s:cword.line  = line('.')
+  let s:cword.lnum  = line('.')
   let s:cword.col   = col('.')
 
   " return to position of word under cursor
@@ -93,7 +93,7 @@ function! s:unite_source.gather_candidates(args, context)
 
   " extract leading and trailing line parts using regexes only, as string
   " indexes are byte-based and thus not multi-byte safe to iterate
-  let l:line = getline(s:cword.line)
+  let l:line = getline(s:cword.lnum)
   if match(s:cword.word, '\M'.s:curchar().'$') != -1 && match(s:cword.word, '\M'.s:nextchar()) == -1
     " we are on the last character, but not on the end of the line:
     " using matchend() to the end of a word would get us the next word
