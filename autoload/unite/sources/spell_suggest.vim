@@ -43,6 +43,7 @@ let s:unite_kind_substitution.action_table   = {
   \   {'description': 'replace all occurences of the current word with the candidate'}
   \ }
 
+" * 'replace' [word under cursor] action
 function! s:unite_kind_substitution.action_table.replace.func(candidate)
   if s:cword.focus()
     call setline(s:cword.line, s:cword.before . a:candidate.word . s:cword.after)
@@ -50,6 +51,7 @@ function! s:unite_kind_substitution.action_table.replace.func(candidate)
   endif
 endfunction
 
+" * 'replace all' [occurrences] action
 function! s:unite_kind_substitution.action_table.replace_all.func(candidate)
   if s:cword.focus()
     execute '% substitute/\<'.s:cword.word.'\>/'.a:candidate.word.'/Ig'
@@ -58,7 +60,7 @@ endfunction
 
 call unite#define_kind(s:unite_kind_substitution)
 
-" Define source: {{{1
+" Define 'spell_suggest' source: {{{1
 let s:unite_source = {
   \ 'name'        : 'spell_suggest',
   \ 'description' : 'candidates from spellsuggest()',
