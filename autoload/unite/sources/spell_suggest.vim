@@ -44,11 +44,16 @@ let s:unite_kind_substitution.action_table   = {
   \ }
 
 function! s:unite_kind_substitution.action_table.replace.func(candidate)
-  call s:replace_word(s:cword, a:candidate.word)
+  if s:cword.focus()
+    call setline(s:cword.line, s:cword.before . a:candidate.word . s:cword.after)
+    call cursor(s:cword.line, len(s:cword.before) + len(a:candidate.word))
+  endif
 endfunction
 
 function! s:unite_kind_substitution.action_table.replace_all.func(candidate)
-  execute '% substitute/\<'.s:cword.word.'\>/'.a:candidate.word.'/Ig'
+  if s:cword.focus()
+    execute '% substitute/\<'.s:cword.word.'\>/'.a:candidate.word.'/Ig'
+  endif
 endfunction
 
 call unite#define_kind(s:unite_kind_substitution)
@@ -66,11 +71,45 @@ function! s:unite_source.gather_candidates(args, context)
     return []
   endif
 
-  " get word under cursor
-  let s:cword = {}
-  let s:cword.word = s:trim(expand('<cword>'))
-  let s:cword.line = line('.')
-  let s:cword.col  = col('.')
+  " get info about word under cursor
+  let s:cword       = {}
+  let s:cword.word  = s:trim(expand('<cword>'))
+  let s:cword.bufnr = bufnr('%')
+  let s:cword.line  = line('.')
+  let s:cword.col   = col('.')
+
+  " return to position of word under cursor
+  function! s:cword.focus() dict
+    if bufexists(self.bufnr)
+      execute 'b'.self.bufnr
+      call cursor(self.line, self.col)
+      return 1
+    else
+      return 0
+    endif
+  endfunction
+
+  " extract leading and trailing line parts using regexes only, as string
+  " indexes are byte-based and thus not multi-byte safe to iterate
+  let l:line = getline(s:cword.line)
+  if match(s:cword.word, '\M'.s:curchar().'$') != -1 && match(s:cword.word, '\M'.s:nextchar()) == -1
+    " we are on the last character, but not on the end of the line:
+    " using matchend() to the end of a word would get us the next word
+    " instead of the current one
+    let l:including = matchstr(l:line, '^.*\%'.s:cword.col.'c.')
+  else
+    " we are somewhere inside, or before (as '<cword>' skips non-word
+    " characters to get the next word), the word: use matchend() to locate the
+    " end of the word (note: multi-byte alphabetic characters do not match
+    " any word regex class, so we can't test for '\w')
+    let l:including = l:line[: matchend(l:line[s:cword.col :], '^.\{-}\(\>\|$\)') + s:cword.col]
+    " we get a trailing character everywhere but on line end: strip that
+    if match(l:line, '\M'.s:cword.word.'$') == -1
+      let l:including = substitute(l:including, '.$', '', '')
+    endif
+  endif
+  let s:cword.before = substitute(l:including, '\M'.s:cword.word.'$', '', '')
+  let s:cword.after  = substitute(l:line, '^\M'.l:including, '', '')
 
   " get word to base suggestions on
   let l:word = len(a:args) > 0 ?
@@ -111,36 +150,6 @@ endfunction
 " * get character after the cursor
 function! s:prevchar()
   return matchstr(getline('.'), '.*\zs\%<'.col('.').'c.')
-endfunction
-
-" * replace word (defined by word, line, col)
-function! s:replace_word(word, replacement) abort
-  let l:line = getline(a:word.line)
-
-  " extract leading and trailing line parts using regexes only, as string
-  " indexes are byte-based and thus not multi-byte safe to iterate
-  if match(a:word.word, '\M'.s:curchar().'$') != -1 && match(a:word.word, '\M'.s:nextchar()) == -1
-    " we are on the last character, but not on the end of the line:
-    " using matchend() to the end of a word would get us the next word
-    " instead of the current one
-    let l:including = matchstr(l:line, '^.*\%'.a:word.col.'c.')
-  else
-    " we are somewhere inside, or before (as '<cword>' skips non-word
-    " characters to get the next word), the word: use matchend() to locate the
-    " end of the word (note: multi-byte alphabetic characters do not match
-    " any word regex class, so we can't test for '\w')
-    let l:including = l:line[: matchend(l:line[a:word.col :], '^.\{-}\(\>\|$\)') + a:word.col]
-    " we get a trailing character everywhere but on line end: strip that
-    if match(l:line, '\M'.a:word.word.'$') == -1
-      let l:including = substitute(l:including, '.$', '', '')
-    endif
-  endif
-  let l:heading   = substitute(l:including, '\M'.a:word.word.'$', '', '')
-  let l:trailing  = substitute(l:line, '^\M'.l:including, '', '')
-
-  " write amended line and place cursor at end of inserted word
-  call setline(a:word.line, l:heading . a:replacement . l:trailing)
-  call setpos('.', [0, a:word.line, len(l:heading) + len(a:replacement), 0])
 endfunction
 
 " * trim leading and trailing whitespace
