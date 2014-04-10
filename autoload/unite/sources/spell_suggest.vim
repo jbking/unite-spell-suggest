@@ -44,7 +44,7 @@ let s:unite_kind_substitution.action_table   = {
   \ }
 
 " * 'replace' [word under cursor] action
-function! s:unite_kind_substitution.action_table.replace.func(candidate)
+function! s:unite_kind_substitution.action_table.replace.func(candidate) abort
   if s:cword.focus()
     call setline(s:cword.lnum, s:cword.before . a:candidate.word . s:cword.after)
     call cursor(s:cword.lnum, len(s:cword.before) + len(a:candidate.word))
@@ -52,7 +52,7 @@ function! s:unite_kind_substitution.action_table.replace.func(candidate)
 endfunction
 
 " * 'replace all' [occurrences] action
-function! s:unite_kind_substitution.action_table.replace_all.func(candidate)
+function! s:unite_kind_substitution.action_table.replace_all.func(candidate) abort
   if s:cword.focus()
     execute '% substitute/\<'.s:cword.word.'\>/'.a:candidate.word.'/Ig'
   endif
@@ -68,7 +68,7 @@ let s:unite_source = {
   \ }
 
 " * candidate listing
-function! s:unite_source.gather_candidates(args, context)
+function! s:unite_source.gather_candidates(args, context) abort
   if &spell == 0
     return []
   endif
@@ -82,13 +82,16 @@ function! s:unite_source.gather_candidates(args, context)
 
   " return to position of word under cursor
   function! s:cword.focus() dict
-    if bufexists(self.bufnr)
-      execute 'b'.self.bufnr
-      call cursor(self.line, self.col)
-      return 1
-    else
+    try
+      if bufexists(self.bufnr)
+        execute 'b'.self.bufnr
+        call cursor(self.lnum, self.col)
+        return 1
+      endif
       return 0
-    endif
+    catch
+      return 0
+    endtry
   endfunction
 
   " extract leading and trailing line parts using regexes only, as string
