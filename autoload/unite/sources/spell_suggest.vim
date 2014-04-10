@@ -119,7 +119,7 @@ function! s:replace_word(word, replacement) abort
 
   " extract leading and trailing line parts using regexes only, as string
   " indexes are byte-based and thus not multi-byte safe to iterate
-  if match(a:word.word, s:curchar().'$') != -1 && match(a:word.word, s:nextchar()) == -1
+  if match(a:word.word, '\M'.s:curchar().'$') != -1 && match(a:word.word, '\M'.s:nextchar()) == -1
     " we are on the last character, but not on the end of the line:
     " using matchend() to the end of a word would get us the next word
     " instead of the current one
@@ -131,12 +131,12 @@ function! s:replace_word(word, replacement) abort
     " any word regex class, so we can't test for '\w')
     let l:including = l:line[: matchend(l:line[a:word.col :], '^.\{-}\(\>\|$\)') + a:word.col]
     " we get a trailing character everywhere but on line end: strip that
-    if match(l:line, a:word.word.'$') == -1
+    if match(l:line, '\M'.a:word.word.'$') == -1
       let l:including = substitute(l:including, '.$', '', '')
     endif
   endif
-  let l:heading   = substitute(l:including, a:word.word.'$', '', '')
-  let l:trailing  = substitute(l:line, '^'.l:including, '', '')
+  let l:heading   = substitute(l:including, '\M'.a:word.word.'$', '', '')
+  let l:trailing  = substitute(l:line, '^\M'.l:including, '', '')
 
   " write amended line and place cursor at end of inserted word
   call setline(a:word.line, l:heading . a:replacement . l:trailing)
