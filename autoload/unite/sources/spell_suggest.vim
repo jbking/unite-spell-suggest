@@ -98,23 +98,45 @@ function! s:unite_source.hooks.on_syntax(args, context)
 endfunction
 
 " Helper functions: {{{1
+" * get character under cursor
+function! s:curchar()
+  return matchstr(getline('.'), '\%'.col('.').'c.')
+endfunction
+
+" * get character before the cursor
+function! s:nextchar()
+  return matchstr(getline('.'), '\%>'.col('.').'c.')
+endfunction
+
+" * get character after the cursor
+function! s:prevchar()
+  return matchstr(getline('.'), '.*\zs\%<'.col('.').'c.')
+endfunction
+
 " * replace word (defined by word, line, col)
 function! s:replace_word(word, replacement) abort
   let l:line = getline(a:word.line)
 
   " extract leading and trailing line parts using regexes only, as string
   " indexes are byte-based and thus not multi-byte safe to iterate
-  if l:line[: a:word.col] =~ a:word.word.'\W$'
-    " we are on the last character: using matchend() to the end of a word
-    " would get us the next word instead of the current one
-    let l:heading  = substitute(l:line[: a:word.col - len(a:word.word)], '.$', '', '')
-    let l:trailing = l:line[a:word.col :]
+  if match(a:word.word, s:curchar().'$') != -1 && match(a:word.word, s:nextchar()) == -1
+    " we are on the last character, but not on the end of the line:
+    " using matchend() to the end of a word would get us the next word
+    " instead of the current one
+    let l:including = matchstr(l:line, '^.*\%'.a:word.col.'c.')
   else
-    " get line to end of current word, then strip it from the line
-    let l:including = substitute(l:line[: matchend(l:line[a:word.col :], '\W*\zs\w\+\>') + a:word.col], '\W\?$', '', '')
-    let l:heading   = substitute(l:including, a:word.word.'$', '', '')
-    let l:trailing  = substitute(l:line, '^'.l:including, '', '')
+    " we are somewhere inside, or before (as '<cword>' skips non-word
+    " characters to get the next word), the word: use matchend() to locate the
+    " end of the word (note: multi-byte alphabetic characters do not match
+    " any word regex class, so we can't test for '\w')
+    let l:including = l:line[: matchend(l:line[a:word.col :], '^.\{-}\(\>\|$\)') + a:word.col]
+    " we get a trailing character everywhere but on line end: strip that
+    if match(l:line, a:word.word.'$') == -1
+      let l:including = substitute(l:including, '.$', '', '')
+    endif
   endif
+  let l:heading   = substitute(l:including, a:word.word.'$', '', '')
+  let l:trailing  = substitute(l:line, '^'.l:including, '', '')
 
   " write amended line and place cursor at end of inserted word
   call setline(a:word.line, l:heading . a:replacement . l:trailing)
