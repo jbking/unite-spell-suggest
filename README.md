@@ -1,0 +1,1 @@
+This project is officially unmaintained as of April 2014, but a maintained fork can be found at [kopischke/unite-spell-suggest](https://github.com/kopischke/unite-spell-suggest). Please submit PRs and issues there.
